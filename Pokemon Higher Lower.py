@@ -9,6 +9,7 @@ otherData = pd.read_csv('https://gist.githubusercontent.com/armgilles/194bcff350
 spritesURL = 'https://play.pokemonshowdown.com/sprites/gen6/'
 possibleURL = 'https://www.serebii.net/pokemon/art/' # + 006-mx.png
 
+print(otherData.keys)
 
 TOKEN = os.getenv('BOT_TOK')
 
@@ -17,6 +18,42 @@ print(otherData.columns.values)
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
+
+def getPokedexURL(index):
+    basePokedex  = str(otherData.iloc[index]['#'])
+    name = otherData.iloc[index]['Name']
+
+    if(len(basePokedex) == 1):
+        basePokedex = str(0) + basePokedex
+    if(len(basePokedex) == 2):
+        basePokedex = str(0) + basePokedex
+
+
+    if('mega' in name and "Yanmega" != name):
+        basePokedex = basePokedex + "-m"
+        if(name[-2] == " "):
+            basePokedex = basePokedex + name[-1]
+    
+    if('Alolan' in name or 'Galarian' in name):
+        basePokedex = basePokedex + "-a"
+
+    if('partner' in name and not 'eevee' in name):
+        pikachuList = ["-p", "-a", "-k", "-u", "-s", "-o"]
+        basePokedex = basePokedex + random.choice(pikachuList)
+
+    if(' Rotom' in name):
+        if('n' == name[2]):
+            basePokedex = basePokedex + "-s"
+        else:
+            basePokedex = basePokedex + "-" + name[0]
+
+    return basePokedex
+
+
+
+
+
+
 
 def fixName(randomPokemonName):
     if('mega' in randomPokemonName):
@@ -86,7 +123,7 @@ class MyClient(discord.Client):
         if userID == self.user.id:
             return
 
-        if user_message == "$pokemonGens":
+        if user_message.lower == "$pokemonGens":
             smallIndex1 = random.randrange(0,len(otherData))
             bigIndex2 = random.randrange(smallIndex1,len(otherData))
 
@@ -94,7 +131,6 @@ class MyClient(discord.Client):
             bigName = fixName(otherData.iloc[bigIndex2]['Name'].lower())
 
 
-            enbed = discord.Embed()
             beegEnbed = discord.Embed(title = "Is the pokemon on the right from a higher or lower Generation than the one on the left?", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3")
             beegEnbed.set_image(url = spritesURL + bigName + ".png")
             print(spritesURL + bigName + ".png")
@@ -119,20 +155,29 @@ class MyClient(discord.Client):
 
 
 
-        elif user_message == "$pokemonGuess":
+        elif user_message.lower() == "$pokemonguess":
             randomIndex = random.randrange(0,len(otherData))
-            await message.channel.send('Guess that Pokemon!')
-            randomPokemonName = otherData.iloc[randomIndex]['Name'].lower()
+
+           
+
+            randomPokedexURL = getPokedexURL(randomIndex)
+
+            fullURL = possibleURL+ randomPokedexURL +  ".png"
+            beegEnbed = discord.Embed(title = "Guess that Pokemon!", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3")
+            print(fullURL)
+            beegEnbed.set_image(url = fullURL)
+            await message.channel.send('Guess that Pokemon!', embeds = [beegEnbed])
+            randomPokemonName = otherData.iloc[randomIndex]['Name']
             print(randomPokemonName)
-            randomPokemonName = fixName(randomPokemonName)
-            await message.channel.send(spritesURL + otherData.iloc[randomIndex]['Name'].lower() + ".png")
+            #randomPokemonName = fixName(randomPokemonName)
+            #await message.channel.send(spritesURL + otherData.iloc[randomIndex]['Name'].lower() + ".png")
 
             def is_correct(m):
                 return m.author == message.author
 
 
             try:
-                guess = await self.wait_for('message', check=is_correct, timeout=5.0)
+                guess = await self.wait_for('message', check=is_correct, timeout=10.0)
             except asyncio.TimeoutError:
                 return await message.channel.send(f'Sorry, you took too long it was {randomPokemonName}.')
 
