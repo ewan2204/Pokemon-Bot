@@ -7,7 +7,7 @@ from discord import app_commands
 
 
 data = pd.read_csv('https://gist.githubusercontent.com/santiagoolivar2017/0591a53c4dd34ecd8488660c7372b0e3/raw/4be104b8bc8876acd15f8e21f1c5945f10e3aa1e/Pokemon-description-image.csv')
-otherData = pd.read_csv('https://gist.githubusercontent.com/armgilles/194bcff35001e7eb53a2a8b441e8b2c6/raw/92200bc0a673d5ce2110aaad4544ed6c4010f687/pokemon.csv')
+otherData = pd.read_csv('https://raw.githubusercontent.com/frank2204/fantastic-lamp/main/data/pokedex_(Update_05.20).csv')
 spritesURL = 'https://play.pokemonshowdown.com/sprites/gen6/'
 possibleURL = 'https://www.serebii.net/pokemon/art/' # + 006-mx.png
 
@@ -22,8 +22,8 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 def getPokedexURL(index):
-    basePokedex  = str(otherData.iloc[index]['#'])
-    name = otherData.iloc[index]['Name']
+    basePokedex  = str(otherData.iloc[index]['pokedex_number'])
+    name = otherData.iloc[index]['name']
 
     if(len(basePokedex) == 1):
         basePokedex = str(0) + basePokedex
@@ -31,7 +31,7 @@ def getPokedexURL(index):
         basePokedex = str(0) + basePokedex
 
 
-    if('mega' in name.lower and "Yanmega" != name):
+    if('mega' in name.lower() and "Yanmega" != name):
         basePokedex = basePokedex + "-m"
         if(name[-2] == " "):
             basePokedex = basePokedex + name[-1]
@@ -196,7 +196,7 @@ class MyClient(discord.Client):
             print(fullURL)
             beegEnbed.set_image(url = fullURL)
             await message.channel.send('Guess that Pokemon!', embeds = [beegEnbed])
-            randomPokemonName = otherData.iloc[randomIndex]['Name']
+            randomPokemonName = otherData.iloc[randomIndex]['name']
             print(randomPokemonName)
             #randomPokemonName = fixName(randomPokemonName)
             #await message.channel.send(spritesURL + otherData.iloc[randomIndex]['Name'].lower() + ".png")
@@ -229,14 +229,76 @@ async def hello(interaction: discord.Interaction):
 
 @client.tree.command()
 @app_commands.describe(
-    first_value='The first value you want to add something to',
-    second_value='The value you want to add to the first value',
+    timeout='Time to answer',
+    gen='The generation or generations you want to play with',
 )
-async def add(interaction: discord.Interaction, first_value: int, second_value: int):
-    """Adds two numbers together."""
-    await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
+async def pokemonguess(interaction: discord.Interaction, timeout: int = 10, gen: int = 12345678):
+    """The fun discord bot functionality"""
+    randomIndex = random.randrange(0,len(otherData))
+       
+    randomPokedexURL = getPokedexURL(randomIndex)
+    fullURL = possibleURL+ randomPokedexURL +  ".png"
+    beegEnbed = discord.Embed(title = "Guess that Pokemon!", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3", colour = discord.Color.random(seed=randomIndex))
+    print(fullURL)
+    beegEnbed.set_image(url = fullURL)
+    await interaction.response.send_message('Guess that Pokemon!', embeds = [beegEnbed])
+    #await interaction.response.send_message(f'Hi, {interaction.user.mention}')
+
+    randomPokemonName = otherData.iloc[randomIndex]['name']
+    print(randomPokemonName)
+    #randomPokemonName = fixName(randomPokemonName)
+    #await message.channel.send(spritesURL + otherData.iloc[randomIndex]['Name'].lower() + ".png")
+    def is_correct(m):
+        return m.author == interaction.user
+    try:
+        guess = await client.wait_for('message', check=is_correct, timeout = timeout)
+    except asyncio.TimeoutError:
+        return await interaction.channel.send(f'Sorry, you took too long it was {randomPokemonName}.')
+    if guess.content.lower() == randomPokemonName.lower():
+        await interaction.channel.send('You are right!')
+    else:
+        await interaction.channel.send(f'Oops. It is actually {randomPokemonName}.')
 
 
+
+@client.tree.command()
+@app_commands.describe(
+    timeout='Time to answer'
+)
+async def pokemongen(interaction: discord.Interaction, timeout: int = 10):
+    """Given two pokemon can you determine which came first?"""
+    smallIndex1 = random.randrange(0,len(otherData))
+    bigIndex2 = random.randrange(0,len(otherData))
+
+
+    left, right = random.sample(range(0,len(list(otherData))), 2)
+    leftURL = possibleURL + getPokedexURL(left) +  ".png"
+    rightURL = possibleURL + getPokedexURL(right) +  ".png"
+
+    # Make embed
+    leftEnbed = discord.Embed(title = "Which one came first Left or Right?", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3", colour = discord.Color.fuchsia())
+    rightEnbed = discord.Embed(title = "Which one came first Left or Right?", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3", colour = discord.Color.fuchsia())
+    
+    # Paste in images.
+    leftEnbed.set_image(url = leftURL)
+    rightEnbed.set_image(url = rightURL)
+
+    # Combine into embeds
+    embeds = [leftEnbed,rightEnbed]
+    ### smallName = fixName(otherData.iloc[smallIndex1]['name'].lower())
+    ### bigName = fixName(otherData.iloc[bigIndex2]['name'].lower())
+
+
+    ### beegEnbed = discord.Embed(title = "Is the pokemon on the right from a higher or lower Generation than the one on the left?", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3")
+    ### beegEnbed.set_image(url = spritesURL + bigName + ".png")
+    print(leftURL)
+    print(rightURL)
+
+    ### smolEnbed = discord.Embed(title = "Is the pokemon on the right from a higher or lower Generation than the one on the left?", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3")
+    ### smolEnbed.set_image(url = spritesURL + smallName + ".png")
+    ### embeds = []
+    ### await interaction.channel.send('Guess that Pokemon!')
+    await interaction.response.send_message(embeds = embeds)
 
 
 client.run(TOKEN)
