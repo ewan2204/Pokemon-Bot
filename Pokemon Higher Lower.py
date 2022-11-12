@@ -3,6 +3,8 @@ import random
 import os
 import pandas as pd
 import asyncio
+from discord import app_commands
+
 
 data = pd.read_csv('https://gist.githubusercontent.com/santiagoolivar2017/0591a53c4dd34ecd8488660c7372b0e3/raw/4be104b8bc8876acd15f8e21f1c5945f10e3aa1e/Pokemon-description-image.csv')
 otherData = pd.read_csv('https://gist.githubusercontent.com/armgilles/194bcff35001e7eb53a2a8b441e8b2c6/raw/92200bc0a673d5ce2110aaad4544ed6c4010f687/pokemon.csv')
@@ -29,7 +31,7 @@ def getPokedexURL(index):
         basePokedex = str(0) + basePokedex
 
 
-    if('mega' in name and "Yanmega" != name):
+    if('mega' in name.lower and "Yanmega" != name):
         basePokedex = basePokedex + "-m"
         if(name[-2] == " "):
             basePokedex = basePokedex + name[-1]
@@ -109,9 +111,36 @@ def fixName(randomPokemonName):
 
 
 class MyClient(discord.Client):
+    def __init__(self, *, intents: discord.Intents):
+        super().__init__(intents=intents)
+        # A CommandTree is a special type that holds all the application command
+        # state required to make it work. This is a separate class because it
+        # allows all the extra state to be opt-in.
+        # Whenever you want to work with application commands, your tree is used
+        # to store and work with them.
+        # Note: When using commands.Bot instead of discord.Client, the bot will
+        # maintain its own tree instead.
+        self.tree = app_commands.CommandTree(self)
+
+
+
+
+
+
     async def on_ready(self):
         print("Hello world")
         print("We have logged in as {0.user}".format(client))
+        try:
+            synced = await self.tree.sync()
+            print(f"Synced {len(synced)} command(s)")
+        except Exception as e:
+            print(e)
+
+
+
+
+
+
 
     async def on_message(self, message):
         username = str(message.author).split('#')[0]
@@ -191,4 +220,23 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 client = MyClient(intents=intents)
+
+@client.tree.command()
+async def hello(interaction: discord.Interaction):
+    """Says hello!"""
+    await interaction.response.send_message(f'Hi, {interaction.user.mention}')
+
+
+@client.tree.command()
+@app_commands.describe(
+    first_value='The first value you want to add something to',
+    second_value='The value you want to add to the first value',
+)
+async def add(interaction: discord.Interaction, first_value: int, second_value: int):
+    """Adds two numbers together."""
+    await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
+
+
+
+
 client.run(TOKEN)
