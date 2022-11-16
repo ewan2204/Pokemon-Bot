@@ -276,15 +276,17 @@ async def pokemongen(interaction: discord.Interaction, timeout: int = 10):
     rightURL = possibleURL + getPokedexURL(right) +  ".png"
 
     # Make embed
-    leftEnbed = discord.Embed(title = "Which one came first Left or Right?", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3", colour = discord.Color.fuchsia())
-    rightEnbed = discord.Embed(title = "Which one came first Left or Right?", url = "https://www.amazon.co.uk/gp/video/detail/B013GV3C2C/ref=atv_dp_season_select_s3", colour = discord.Color.fuchsia())
-    
+    leftEnbed = discord.Embed(title = "Which one came first Left or Right?Which one came first Left or Right?Which one came first Left or Right?Which one came first Left or Right?", url = "https://i.stack.imgur.com/Fzh0w.png", colour = discord.Color.fuchsia())
+    rightEnbed = discord.Embed(title = "Which one came first Left or Right?Which one came first Left or Right?Which one came first Left or Right?Which one came first Left or Right?", url = "https://i.stack.imgur.com/Fzh0w.png", colour = discord.Color.fuchsia())
+    leftEnbed.set_footer("\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000|")
+    rightEnbed.set_footer("\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000|")
     # Paste in images.
     leftEnbed.set_image(url = leftURL)
     rightEnbed.set_image(url = rightURL)
 
     # Combine into embeds
     embeds = [leftEnbed,rightEnbed]
+    
     ### smallName = fixName(otherData.iloc[smallIndex1]['name'].lower())
     ### bigName = fixName(otherData.iloc[bigIndex2]['name'].lower())
 
@@ -299,6 +301,7 @@ async def pokemongen(interaction: discord.Interaction, timeout: int = 10):
     ### embeds = []
     ### await interaction.channel.send('Guess that Pokemon!')
     await interaction.response.send_message(embeds = embeds)
-
+    def is_correct(m):
+        return m.author == interaction.user
 
 client.run(TOKEN)
